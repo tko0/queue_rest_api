@@ -81,14 +81,14 @@ export const removeSongs = (songs: QueueItem[]): void => {
 };
 
 export const removeSongsFromQueue = (req: Request, res: Response): void => {
-    const songsToRemove: QueueItem[] = req.body.songs;
+    const songs: QueueItem[] = req.body.songs;
 
-    if (!Array.isArray(songsToRemove) || songsToRemove.length === 0) {
+    if (!Array.isArray(songs) || songs.length === 0) {
         res.status(400).json({ error: 'Invalid request body' });
         return;
     }
 
-    removeSongs(songsToRemove);
+    removeSongs(songs);
 
     res.status(200).json({ message: 'Songs removed from queue successfully', queue: getQueue() });
 };
