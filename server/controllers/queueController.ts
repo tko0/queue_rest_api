@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
-import { QueueItem } from '../models/QueueItem';
+import { SongItem } from '../models/SongItem';
 
-let queue: Map<number, QueueItem> = new Map();
+let queue: Map<number, SongItem> = new Map();
 let nextId: number = 1;
 
 //private function
-export const getQueue = (): QueueItem[] => {
+export const getQueue = (): SongItem[] => {
     return Array.from(queue.values());
 };
 
@@ -24,11 +24,9 @@ export const addSongs = (songs: { name: string; artist: string }[]): void => {
     songs.forEach(song => {
         let songId: number = nextId++;
 
-        const newItem: QueueItem = {
-            song_id: songId,
+        const newItem: SongItem = {
             song_name: song.name,
             song_artist: song.artist,
-            position: queue.size + 1
         };
 
         queue.set(songId, newItem);
@@ -50,46 +48,35 @@ export const addSongsToQueue = (req: Request, res: Response): void => {
 };
 
 //private function
-export const removeSongs = (songs: QueueItem[]): void => {
-    const notInQueue: string[] = [];
+export const removeSongs = (songIds: number[]): void => {
+    const notInQueue: number[] = [];
 
-    songs.forEach(song => {
-        let found = false;
-        queue.forEach((item, id) => {
-            if (item.song_id === song.song_id && item.position === song.position) {
-                queue.delete(id);
-                found = true;
-            }
-        });
-        if (!found) {
-            notInQueue.push(`${song.song_name} (ID: ${song.song_id}, Position: ${song.position})`);
+    songIds.forEach(songId => {
+        if (queue.has(songId)) {
+            queue.delete(songId);
+        } else {
+            notInQueue.push(songId);
         }
     });
 
     if (notInQueue.length > 0) {
         if (notInQueue.length === 1) {
-            console.error(`Song ${notInQueue[0]} is not in the queue.`);
+            console.error(`Song with ID ${notInQueue[0]} is not in the queue.`);
         } else {
-            console.error(`Songs ${notInQueue.join(', ')} are not in the queue.`);
+            console.error(`Songs with IDs ${notInQueue.join(', ')} are not in the queue.`);
         }
     }
-
-    let position = 1;
-    queue.forEach(item => {
-        item.position = position++;
-    });
 };
 
 export const removeSongsFromQueue = (req: Request, res: Response): void => {
-    const songs: QueueItem[] = req.body.songs;
+    const songIds: number[] = req.body.songIds;
 
-    if (!Array.isArray(songs) || songs.length === 0) {
+    if (!Array.isArray(songIds) || songIds.length === 0) {
         res.status(400).json({ error: 'Invalid request body' });
         return;
     }
 
-    removeSongs(songs);
+    removeSongs(songIds);
 
     res.status(200).json({ message: 'Songs removed from queue successfully', queue: getQueue() });
 };
-
